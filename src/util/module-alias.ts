@@ -1,8 +1,8 @@
-import * as path from "path"
-import moduleAlias from "module-alias"
+import * as path from "path";
+import moduleAlias from "module-alias";
 
 //Importa todos os arquivos da pasta raiz do projeto.
-const files = path.resolve(__dirname,"../..");
+const files = path.resolve(__dirname, "../..");
 
 /*
     Usamos o moduleAlias no projeto para que depois que o código do mesmo
@@ -10,6 +10,6 @@ const files = path.resolve(__dirname,"../..");
     que foram configurados em tsconfig.json.
 */
 moduleAlias.addAliases({
-    "@src":path.join(files,'src'),
-    "@test": path.join(files,'test')
-})
+    "@src": path.join(files, "src"),
+    "@test": path.join(files, "test"),
+});
