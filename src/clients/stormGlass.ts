@@ -1,6 +1,11 @@
 import { InternalError } from "@src/util/errors/internalError";
-import { AxiosError, AxiosStatic } from "axios";
 import config, { IConfig } from "config";
+
+/*
+    Ao importarmos um módulo dessa maneira (* as foo), criamos uma espécie de namespace, 
+    dessa maneira evitando conflito de nomes de classes, funções, variáveis, etc...
+*/
+import * as HTTPUtil from "@src/util/request";
 
 interface StormGlassPointSource {
     [key: string]: number;
@@ -32,6 +37,10 @@ interface ForecastPoint {
     windSpeed: number;
 }
 
+/**
+ * Tipo de erro utilizado quando algo quebra antes que requisição chegue a api do StormGlass.
+ * Ex: Network Error
+ */
 class ClientRequestError extends InternalError {
     constructor(message: string) {
         const internalMessage = `Unexpected error when to trying to communicate to StormGlass`;
@@ -39,6 +48,9 @@ class ClientRequestError extends InternalError {
     }
 }
 
+/**
+ * Tipo de erro utilizado quando a requisição falha com algum status code 4xx/5xx
+ */
 class StormGlassResponseError extends InternalError {
     constructor(message: string) {
         const internalMessage = `Unexpected error returned by to StormGlass service`;
@@ -56,7 +68,7 @@ class StormGlass {
 
     readonly stormGlassAPISource = "noaa";
 
-    constructor(protected request: AxiosStatic) {}
+    constructor(protected request = new HTTPUtil.Request()) {}
 
     private normalizeResponse(
         point: StormGlassForecastResponse
@@ -76,7 +88,7 @@ class StormGlass {
     }
 
     //O tipo Partial faz com que todas as propriedades do tipo/interface passada virem opcionais
-    private isValidPoint(point: Partial<StormGlassPoint>): Boolean {
+    private isValidPoint(point: Partial<StormGlassPoint>): boolean {
         return !!(
             point.time &&
             point.swellDirection?.[this.stormGlassAPISource] &&
@@ -93,10 +105,6 @@ class StormGlass {
         lat: number,
         lng: number
     ): Promise<ForecastPoint[]> {
-        /*
-            Passamos a interface StormGlassForecastResponse para o generics do axios.get, para
-            que o tipo do retorno do método seja StormGlassForecastResponse.
-        */
         try {
             const response = await this.request.get<StormGlassForecastResponse>(
                 `${stormGlassResourceConfig.get("apiUrl")}/weather/point?
@@ -112,22 +120,11 @@ class StormGlass {
 
             return this.normalizeResponse(response.data);
         } catch (err) {
-            const axiosError = err as AxiosError;
-            /*
-                O operador ?. serve para testar propriedades opcionais, ou seja, o mesmo nos permite
-                verificar se uma propriedade existe ou não dentro de um objeto.
-
-                Exemplo:
-
-                if (axiosError?.response?.status){}
-                ==
-                if(axiosError && axiosError.response && axiosError.response.status)
-
-            */
-            if (axiosError?.response?.status) {
+            if (err instanceof Error && HTTPUtil.Request.isRequestError(err)) {
+                const axiosError = HTTPUtil.Request.extractErrorData(err);
                 throw new StormGlassResponseError(
-                    `Error:${JSON.stringify(axiosError.response.data)} Code:${
-                        axiosError.response.status
+                    `Error:${JSON.stringify(axiosError.data)} Code:${
+                        axiosError.status
                     }`
                 );
             }
@@ -142,4 +139,5 @@ export {
     StormGlassForecastResponse,
     StormGlassPoint,
     ClientRequestError,
+    ForecastPoint,
 };
