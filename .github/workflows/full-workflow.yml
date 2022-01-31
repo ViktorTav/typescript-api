@@ -41,6 +41,6 @@ jobs:
               if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'}}
               uses: akhileshns/heroku-deploy@3.12.12
               with:
-                  heroku_api_key: ${{ secret.HEROKU_API_SECRET }}
+                  heroku_api_key: ${{ secrets.HEROKU_API_SECRET }}
                   heroku_app_name: typescript-forecast-api
                   heroku_email: viktortaveira@gmail.com
