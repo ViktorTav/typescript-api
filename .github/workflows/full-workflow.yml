@@ -27,7 +27,7 @@ jobs:
                   node-version: ${{ matrix.node-version }}
 
             - name: Start MongoDb
-              uses: supercharge/mongodb-github-action@1.1.0
+              uses: supercharge/mongodb-github-action@v1.1.0
               with:
                   mongodb-version: ${{ matrix.mongodb-version }}
 
@@ -39,7 +39,7 @@ jobs:
 
             - name: Deploy application
               if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'}}
-              uses: akhileshns/heroku-deploy@3.12.12
+              uses: akhileshns/heroku-deploy@v3.12.12
               with:
                   heroku_api_key: ${{ secrets.HEROKU_API_SECRET }}
                   heroku_app_name: typescript-forecast-api
