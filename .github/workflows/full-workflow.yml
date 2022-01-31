@@ -1,10 +1,10 @@
 name: Complete workflow
 
 on:
-  push:
-    branches:
+	push:
+		branches:
 			- main
-			- master
+                        - master
 		pull_request:
 			- main
 			- master
