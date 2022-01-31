@@ -70,6 +70,39 @@ class StormGlass {
 
     constructor(protected request = new HTTPUtil.Request()) {}
 
+    public async fetchPoints(
+        lat: number,
+        lng: number
+    ): Promise<ForecastPoint[]> {
+        try {
+            const response = await this.request.get<StormGlassForecastResponse>(
+                `${stormGlassResourceConfig.get(
+                    "apiUrl"
+                )}/weather/point?params=${this.stormGlassAPIParams}&source=${
+                    this.stormGlassAPISource
+                }&lat=${lat}&lng=${lng}`,
+                {
+                    headers: {
+                        Authorization: stormGlassResourceConfig.get("apiToken"),
+                    },
+                }
+            );
+
+            return this.normalizeResponse(response.data);
+        } catch (err) {
+            if (err instanceof Error && HTTPUtil.Request.isRequestError(err)) {
+                const axiosError = HTTPUtil.Request.extractErrorData(err);
+                throw new StormGlassResponseError(
+                    `Error:${JSON.stringify(axiosError.data)} Code:${
+                        axiosError.status
+                    }`
+                );
+            }
+
+            throw new ClientRequestError(JSON.stringify(err));
+        }
+    }
+
     private normalizeResponse(
         point: StormGlassForecastResponse
     ): ForecastPoint[] {
@@ -99,38 +132,6 @@ class StormGlass {
             point.windDirection?.[this.stormGlassAPISource] &&
             point.windSpeed?.[this.stormGlassAPISource]
         );
-    }
-
-    public async fetchPoints(
-        lat: number,
-        lng: number
-    ): Promise<ForecastPoint[]> {
-        try {
-            const response = await this.request.get<StormGlassForecastResponse>(
-                `${stormGlassResourceConfig.get("apiUrl")}/weather/point?
-                    params=${this.stormGlassAPIParams}
-                    &source=${this.stormGlassAPISource}
-                    &lat=${lat}&lng=${lng}`,
-                {
-                    headers: {
-                        Authorization: stormGlassResourceConfig.get("apiToken"),
-                    },
-                }
-            );
-
-            return this.normalizeResponse(response.data);
-        } catch (err) {
-            if (err instanceof Error && HTTPUtil.Request.isRequestError(err)) {
-                const axiosError = HTTPUtil.Request.extractErrorData(err);
-                throw new StormGlassResponseError(
-                    `Error:${JSON.stringify(axiosError.data)} Code:${
-                        axiosError.status
-                    }`
-                );
-            }
-
-            throw new ClientRequestError(JSON.stringify(err));
-        }
     }
 }
 

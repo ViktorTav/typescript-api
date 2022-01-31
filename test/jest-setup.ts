@@ -7,9 +7,11 @@
 import { SetupServer } from "@src/server";
 import supertest from "supertest";
 
-beforeAll(() => {
-    const server = new SetupServer();
-    server.init();
+let server: SetupServer;
+
+beforeAll(async () => {
+    server = new SetupServer();
+    await server.init();
 
     /*
         Para utilizarmos o nosso app em qualquer arquivo de teste, iremos
@@ -18,4 +20,12 @@ beforeAll(() => {
         globals.d.ts, presente na pasta de test (que é essa :>)
     */
     global.testRequest = supertest(server.getApp());
+});
+
+/*
+    Após finalizarmos os testes, utilizamos o método close para encerrar processos
+    como o do banco de dados.
+*/
+afterAll(async () => {
+    await server.close();
 });
