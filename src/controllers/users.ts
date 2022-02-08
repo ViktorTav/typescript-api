@@ -1,4 +1,5 @@
-import { Controller, Post } from "@overnightjs/core";
+import { Controller, Get, Middleware, Post } from "@overnightjs/core";
+import { authMiddleware } from "@src/middlewares/auth";
 import { User } from "@src/models/user";
 import { AuthService } from "@src/services/auth";
 import { Request, Response } from "express";
@@ -28,22 +29,38 @@ class UsersController extends BaseController {
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(401).send({
+            return this.sendErrorResponse(res, {
                 code: 401,
-                error: "User not found!",
+                message: "User not found!",
             });
         }
 
         if (!(await AuthService.comparePassword(password, user.password))) {
-            return res.status(401).send({
+            return this.sendErrorResponse(res, {
                 code: 401,
-                error: "Password doesn't match!",
+                message: "Password doesn't match!",
             });
         }
 
         const token = AuthService.generateToken(user.toJSON());
 
         res.status(200).send({ token });
+    }
+
+    @Get("me")
+    @Middleware(authMiddleware)
+    public async me(req: Request, res: Response): Promise<Response> {
+        const email = req?.decoded?.email;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return this.sendErrorResponse(res, {
+                code: 404,
+                message: "User not found!",
+            });
+        }
+
+        return res.send({ user });
     }
 }
 
